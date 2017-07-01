@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -19,29 +21,43 @@ public class DetailviewActivity extends AppCompatActivity {
         super.onCreate(savedInstancedState);
         setContentView(R.layout.activity_detailview);
 
-        String todoName = getIntent().getStringExtra("todoName");
+        Todo todo = (Todo) getIntent().getSerializableExtra(Todo.NAME);
 
         todoNameView = (TextView) findViewById(R.id.todoName);
 
-        if (todoName != null) {
-            todoNameView.setText(todoName);
+        if (todo != null) {
+            todoNameView.setText(todo.getName());
         }
-
-        saveButton = (Button) findViewById(R.id.saveButton);
-        saveButton.setOnClickListener(new View.OnClickListener () {
-            @Override
-            public void onClick(View view) {
-                saveNode();
-            }
-        });
     }
 
     private void saveNode() {
         Intent returnIntent = new Intent();
         String todoName = todoNameView.getText().toString();
-        returnIntent.putExtra("todoName", todoName);
+
+        Todo todo = new Todo(todoName);
+
+        returnIntent.putExtra(Todo.NAME, todo);
 
         setResult(Activity.RESULT_OK, returnIntent);
         finish();
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        getMenuInflater().inflate(R.menu.options_overview, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.saveButton:
+                saveNode();
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }
