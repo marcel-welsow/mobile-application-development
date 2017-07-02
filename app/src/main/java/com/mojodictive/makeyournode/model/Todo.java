@@ -1,4 +1,4 @@
-package com.mojodictive.makeyournode;
+package com.mojodictive.makeyournode.model;
 
 import java.io.Serializable;
 

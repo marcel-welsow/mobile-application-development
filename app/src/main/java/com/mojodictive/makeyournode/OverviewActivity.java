@@ -1,27 +1,32 @@
 package com.mojodictive.makeyournode;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Arrays;
+import com.mojodictive.makeyournode.model.ITodoCRUDOperations;
+import com.mojodictive.makeyournode.model.SimpleTodoCRUDOperations;
+import com.mojodictive.makeyournode.model.Todo;
+
 import java.util.List;
 
 public class OverviewActivity extends AppCompatActivity {
 
-    private List<Todo> todos = Arrays.asList(new Todo[]{new Todo("lorem"),new Todo("ipsum"), new Todo("dolor"), new Todo("sed"), new Todo("dispincing"), new Todo("elit")});
+    private ITodoCRUDOperations todoCRUDOperations;
 
     private ListView todoList;
     private ArrayAdapter<Todo> listViewAdapter;
+
+    private ProgressDialog progressDialog;
 
     private class TodoViewHolder {
 
@@ -34,6 +39,8 @@ public class OverviewActivity extends AppCompatActivity {
         setContentView(R.layout.activity_overview);
 
         todoList = (ListView) findViewById(R.id.todoList);
+
+        progressDialog = new ProgressDialog(this);
 
         View addNodeActionButton = findViewById(R.id.addNodeAction);
         addNodeActionButton.setOnClickListener(new View.OnClickListener() {
@@ -74,6 +81,8 @@ public class OverviewActivity extends AppCompatActivity {
         listViewAdapter.setNotifyOnChange(true);
         todoList.setAdapter(listViewAdapter);
 
+        todoCRUDOperations = new SimpleTodoCRUDOperations();
+
         readItemsAndFillListView();
     }
 
@@ -86,9 +95,36 @@ public class OverviewActivity extends AppCompatActivity {
 
     private void readItemsAndFillListView() {
 
+        List<Todo> todos = todoCRUDOperations.readTodos();
+
         for (Todo todo : todos) {
             addItemToListView(todo);
         }
+    }
+
+    private void createAndShowTodo(Todo todo) {
+
+        new AsyncTask<Todo,Void,Todo>(){
+
+            @Override
+            protected void onPreExecute() {
+                progressDialog.show();
+                progressDialog.setMessage("todo will be created ...");
+            }
+
+            @Override
+            protected Todo doInBackground(Todo... params) {
+                return todoCRUDOperations.createTodo(params[0]);
+            }
+
+            @Override
+            protected void onPostExecute(Todo todo) {
+
+                addItemToListView(todo);
+
+                progressDialog.hide();
+            }
+        }.execute(todo);
     }
 
     private void addItemToListView(Todo todo) {
@@ -108,8 +144,15 @@ public class OverviewActivity extends AppCompatActivity {
 
         Todo todo = (Todo) data.getSerializableExtra(Todo.NAME);
 
-        addItemToListView(todo);
+        createAndShowTodo(todo);
 
         Toast.makeText(this, "got new todo: " + todo.getName(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        progressDialog.dismiss();
     }
 }
