@@ -6,6 +6,8 @@ public class Todo implements Serializable {
 
     public static final String NAME = "todo";
 
+    private long id;
+
     private String name;
 
     private long dueDate;
@@ -32,5 +34,13 @@ public class Todo implements Serializable {
 
     public void setDueDate(long dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 }

@@ -8,12 +8,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.mojodictive.makeyournode.model.ITodoCRUDOperations;
+import com.mojodictive.makeyournode.model.LocalTodoCRUDOperations;
 import com.mojodictive.makeyournode.model.SimpleTodoCRUDOperations;
 import com.mojodictive.makeyournode.model.Todo;
 
@@ -81,7 +83,17 @@ public class OverviewActivity extends AppCompatActivity {
         listViewAdapter.setNotifyOnChange(true);
         todoList.setAdapter(listViewAdapter);
 
-        todoCRUDOperations = new SimpleTodoCRUDOperations();
+        todoList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                Todo todo = listViewAdapter.getItem(position);
+
+                showDetailView(todo);
+            }
+        });
+
+        todoCRUDOperations = new LocalTodoCRUDOperations(this);
 
         readItemsAndFillListView();
     }
@@ -95,11 +107,29 @@ public class OverviewActivity extends AppCompatActivity {
 
     private void readItemsAndFillListView() {
 
-        List<Todo> todos = todoCRUDOperations.readTodos();
+        new AsyncTask<Void, Void, List<Todo>>() {
 
-        for (Todo todo : todos) {
-            addItemToListView(todo);
-        }
+            @Override
+            protected void onPreExecute() {
+                progressDialog.show();
+                progressDialog.setMessage("list will be created ...");
+            }
+
+            @Override
+            protected List<Todo> doInBackground(Void... params) {
+                return todoCRUDOperations.readTodos();
+            }
+
+            @Override
+            protected void onPostExecute(List<Todo> todos) {
+
+                progressDialog.hide();
+
+                for (Todo todo : todos) {
+                    addItemToListView(todo);
+                }
+            }
+        }.execute();
     }
 
     private void createAndShowTodo(Todo todo) {
