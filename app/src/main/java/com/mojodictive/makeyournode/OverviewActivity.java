@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import com.mojodictive.makeyournode.model.ITodoCRUDOperations;
 import com.mojodictive.makeyournode.model.LocalTodoCRUDOperations;
+import com.mojodictive.makeyournode.model.RemoteTodoCRUDOperations;
 import com.mojodictive.makeyournode.model.SimpleTodoCRUDOperations;
 import com.mojodictive.makeyournode.model.Todo;
 
@@ -97,7 +98,8 @@ public class OverviewActivity extends AppCompatActivity {
             }
         });
 
-        todoCRUDOperations = new LocalTodoCRUDOperations(this);
+//        todoCRUDOperations = new LocalTodoCRUDOperations(this);
+        todoCRUDOperations = new RemoteTodoCRUDOperations();
 
         readItemsAndFillListView();
     }

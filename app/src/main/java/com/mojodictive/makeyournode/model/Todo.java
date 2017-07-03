@@ -1,5 +1,7 @@
 package com.mojodictive.makeyournode.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 
 public class Todo implements Serializable {
@@ -7,9 +9,9 @@ public class Todo implements Serializable {
     public static final String NAME = "todo";
 
     private long id;
-
     private String name;
 
+    @SerializedName("expiry")
     private long dueDate;
 
     public Todo() {
