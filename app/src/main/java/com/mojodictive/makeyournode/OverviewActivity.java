@@ -1,5 +1,6 @@
 package com.mojodictive.makeyournode;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -22,6 +23,9 @@ import com.mojodictive.makeyournode.model.Todo;
 import java.util.List;
 
 public class OverviewActivity extends AppCompatActivity {
+
+    private static final int EDIT_TODO = 2;
+    private static final int CREATE_TODO = 1;
 
     private ITodoCRUDOperations todoCRUDOperations;
 
@@ -102,7 +106,7 @@ public class OverviewActivity extends AppCompatActivity {
 
         Intent detailviewIntent = new Intent(this, DetailviewActivity.class);
 
-        startActivityForResult(detailviewIntent, 1);
+        startActivityForResult(detailviewIntent, CREATE_TODO);
     }
 
     private void readItemsAndFillListView() {
@@ -132,6 +136,49 @@ public class OverviewActivity extends AppCompatActivity {
         }.execute();
     }
 
+    private void addItemToListView(Todo todo) {
+        listViewAdapter.add(todo);
+    }
+
+    private void showDetailView(Todo todo) {
+
+        Intent detailviewIntent = new Intent(this, DetailviewActivity.class);
+        detailviewIntent.putExtra(Todo.NAME, todo);
+
+        startActivityForResult(detailviewIntent, EDIT_TODO);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        switch (requestCode) {
+            case CREATE_TODO:
+                if (resultCode == Activity.RESULT_OK) createTodoOnActivityResult(data);
+                break;
+            case EDIT_TODO:
+                if (resultCode == DetailviewActivity.RESULT_DELETE) deleteTodoOnActivityResult(data);
+                break;
+        }
+    }
+
+    private void createTodoOnActivityResult(Intent data) {
+
+        Todo todo = (Todo) data.getSerializableExtra(Todo.NAME);
+
+        createAndShowTodo(todo);
+
+        Toast.makeText(this, "got new todo: " + todo.getName(), Toast.LENGTH_SHORT).show();
+    }
+
+    private void deleteTodoOnActivityResult(Intent data) {
+
+        Todo todo = (Todo) data.getSerializableExtra(Todo.NAME);
+
+        deleteAndRemoveTodo(todo);
+
+        Toast.makeText(this, "delete todo: " + todo.getName(), Toast.LENGTH_SHORT).show();
+    }
+
     private void createAndShowTodo(Todo todo) {
 
         new AsyncTask<Todo,Void,Todo>(){
@@ -157,26 +204,50 @@ public class OverviewActivity extends AppCompatActivity {
         }.execute(todo);
     }
 
-    private void addItemToListView(Todo todo) {
-        listViewAdapter.add(todo);
+    private void deleteAndRemoveTodo(Todo todo) {
+
+        new AsyncTask<Todo, Void, Todo>() {
+
+            @Override
+            protected void onPreExecute() {
+                progressDialog.show();
+                progressDialog.setMessage("todo will be deleted ...");
+            }
+
+            @Override
+            protected Todo doInBackground(Todo... params) {
+
+                todoCRUDOperations.deleteTodo(params[0].getId());
+
+                return params[0];
+            }
+
+            @Override
+            protected void onPostExecute(Todo todo) {
+
+                listViewAdapter.remove(findTodoInListView(todo.getId()));
+
+                progressDialog.hide();
+            }
+        }.execute(todo);
+
+//        boolean deleted = todoCRUDOperations.deleteTodo(todo.getId());
+//
+//        if (deleted) {
+//            listViewAdapter.remove(findTodoInListView(todo.getId()));
+//        }
     }
 
-    private void showDetailView(Todo todo) {
+    private Todo findTodoInListView(long id) {
 
-        Intent detailviewIntent = new Intent(this, DetailviewActivity.class);
-        detailviewIntent.putExtra(Todo.NAME, todo);
+        for (int i=0;  i<listViewAdapter.getCount(); i++) {
 
-        startActivity(detailviewIntent);
-    }
+            if (listViewAdapter.getItem(i).getId() == id) {
+                return listViewAdapter.getItem(i);
+            }
+        }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-        Todo todo = (Todo) data.getSerializableExtra(Todo.NAME);
-
-        createAndShowTodo(todo);
-
-        Toast.makeText(this, "got new todo: " + todo.getName(), Toast.LENGTH_SHORT).show();
+        return null;
     }
 
     @Override

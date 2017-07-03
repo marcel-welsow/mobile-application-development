@@ -79,6 +79,9 @@ public class LocalTodoCRUDOperations implements ITodoCRUDOperations {
 
     @Override
     public boolean deleteTodo(long id) {
-        return false;
+
+        int numOfRows = database.delete(TABLE, "ID=?", new String[]{String.valueOf(id)});
+
+        return numOfRows > 0;
     }
 }

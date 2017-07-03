@@ -13,8 +13,11 @@ import com.mojodictive.makeyournode.model.Todo;
 
 public class DetailviewActivity extends AppCompatActivity {
 
+    public static final int RESULT_DELETE = 10;
+
     private TextView todoNameView;
     private Button saveButton;
+    private Todo todo;
 
     @Override
     public void onCreate(Bundle savedInstancedState) {
@@ -22,7 +25,7 @@ public class DetailviewActivity extends AppCompatActivity {
         super.onCreate(savedInstancedState);
         setContentView(R.layout.activity_detailview);
 
-        Todo todo = (Todo) getIntent().getSerializableExtra(Todo.NAME);
+        todo = (Todo) getIntent().getSerializableExtra(Todo.NAME);
 
         todoNameView = (TextView) findViewById(R.id.todoName);
 
@@ -32,6 +35,7 @@ public class DetailviewActivity extends AppCompatActivity {
     }
 
     private void saveNode() {
+
         Intent returnIntent = new Intent();
         String todoName = todoNameView.getText().toString();
 
@@ -40,6 +44,17 @@ public class DetailviewActivity extends AppCompatActivity {
         returnIntent.putExtra(Todo.NAME, todo);
 
         setResult(Activity.RESULT_OK, returnIntent);
+
+        finish();
+    }
+
+    private void deletenNode() {
+
+        Intent returnIntent = new Intent();
+        returnIntent.putExtra(Todo.NAME, todo);
+
+        setResult(RESULT_DELETE, returnIntent);
+
         finish();
     }
 
@@ -56,6 +71,9 @@ public class DetailviewActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.saveButton:
                 saveNode();
+                break;
+            case R.id.deleteButton:
+                deletenNode();
                 break;
         }
 

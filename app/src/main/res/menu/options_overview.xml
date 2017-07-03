@@ -6,5 +6,7 @@
         android:icon="@drawable/save_white_24"
         android:title="SAVE"/>
     <item android:id="@+id/deleteButton"
+        android:icon="@drawable/trash_white_24"
+        app:showAsAction="always"
         android:title="DELETE" />
 </menu>
