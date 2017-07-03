@@ -3,7 +3,6 @@ package com.mojodictive.makeyournode;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,10 +14,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.mojodictive.makeyournode.model.ITodoCRUDOperations;
-import com.mojodictive.makeyournode.model.LocalTodoCRUDOperations;
-import com.mojodictive.makeyournode.model.RemoteTodoCRUDOperations;
-import com.mojodictive.makeyournode.model.SimpleTodoCRUDOperations;
+import com.mojodictive.makeyournode.model.ITodoCRUDOperationsAsync;
+
 import com.mojodictive.makeyournode.model.Todo;
 
 import java.util.List;
@@ -28,7 +25,7 @@ public class OverviewActivity extends AppCompatActivity {
     private static final int EDIT_TODO = 2;
     private static final int CREATE_TODO = 1;
 
-    private ITodoCRUDOperations todoCRUDOperations;
+    private ITodoCRUDOperationsAsync todoCRUDOperations;
 
     private ListView todoList;
     private ArrayAdapter<Todo> listViewAdapter;
@@ -99,7 +96,7 @@ public class OverviewActivity extends AppCompatActivity {
         });
 
 //        todoCRUDOperations = new LocalTodoCRUDOperations(this);
-        todoCRUDOperations = new RemoteTodoCRUDOperations();
+        todoCRUDOperations = ((CRUDOperationsApplication) getApplication()).getCRUDOperationsAsync();
 
         readItemsAndFillListView();
     }
@@ -109,33 +106,6 @@ public class OverviewActivity extends AppCompatActivity {
         Intent detailviewIntent = new Intent(this, DetailviewActivity.class);
 
         startActivityForResult(detailviewIntent, CREATE_TODO);
-    }
-
-    private void readItemsAndFillListView() {
-
-        new AsyncTask<Void, Void, List<Todo>>() {
-
-            @Override
-            protected void onPreExecute() {
-                progressDialog.show();
-                progressDialog.setMessage("list will be created ...");
-            }
-
-            @Override
-            protected List<Todo> doInBackground(Void... params) {
-                return todoCRUDOperations.readTodos();
-            }
-
-            @Override
-            protected void onPostExecute(List<Todo> todos) {
-
-                progressDialog.hide();
-
-                for (Todo todo : todos) {
-                    addItemToListView(todo);
-                }
-            }
-        }.execute();
     }
 
     private void addItemToListView(Todo todo) {
@@ -181,63 +151,54 @@ public class OverviewActivity extends AppCompatActivity {
         Toast.makeText(this, "delete todo: " + todo.getName(), Toast.LENGTH_SHORT).show();
     }
 
+    private void readItemsAndFillListView() {
+
+        progressDialog.show();
+        progressDialog.setMessage("list will be created ...");
+
+        todoCRUDOperations.readTodos(new ITodoCRUDOperationsAsync.CallbackFunction<List<Todo>>() {
+            @Override
+            public void process(List<Todo> todos) {
+
+                progressDialog.hide();
+
+                for (Todo todo : todos) {
+                    addItemToListView(todo);
+                }
+            }
+        });
+    }
+
     private void createAndShowTodo(Todo todo) {
 
-        new AsyncTask<Todo,Void,Todo>(){
+        progressDialog.show();
+        progressDialog.setMessage("todo will be created ...");
+
+        todoCRUDOperations.createTodo(todo, new ITodoCRUDOperationsAsync.CallbackFunction<Todo>() {
 
             @Override
-            protected void onPreExecute() {
-                progressDialog.show();
-                progressDialog.setMessage("todo will be created ...");
-            }
-
-            @Override
-            protected Todo doInBackground(Todo... params) {
-                return todoCRUDOperations.createTodo(params[0]);
-            }
-
-            @Override
-            protected void onPostExecute(Todo todo) {
-
+            public void process(Todo todo) {
                 addItemToListView(todo);
 
                 progressDialog.hide();
             }
-        }.execute(todo);
+        });
     }
 
-    private void deleteAndRemoveTodo(Todo todo) {
+    private void deleteAndRemoveTodo(final Todo todo) {
 
-        new AsyncTask<Todo, Void, Todo>() {
+        progressDialog.show();
+        progressDialog.setMessage("todo will be deleted ...");
 
-            @Override
-            protected void onPreExecute() {
-                progressDialog.show();
-                progressDialog.setMessage("todo will be deleted ...");
-            }
+        todoCRUDOperations.deleteTodo(todo.getId(), new ITodoCRUDOperationsAsync.CallbackFunction<Boolean>() {
 
             @Override
-            protected Todo doInBackground(Todo... params) {
-
-                todoCRUDOperations.deleteTodo(params[0].getId());
-
-                return params[0];
-            }
-
-            @Override
-            protected void onPostExecute(Todo todo) {
-
-                listViewAdapter.remove(findTodoInListView(todo.getId()));
+            public void process(Boolean deleted) {
+                if (deleted) listViewAdapter.remove(findTodoInListView(todo.getId()));
 
                 progressDialog.hide();
             }
-        }.execute(todo);
-
-//        boolean deleted = todoCRUDOperations.deleteTodo(todo.getId());
-//
-//        if (deleted) {
-//            listViewAdapter.remove(findTodoInListView(todo.getId()));
-//        }
+        });
     }
 
     private Todo findTodoInListView(long id) {
